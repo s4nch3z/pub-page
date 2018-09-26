@@ -1,0 +1,149 @@
+<!doctype html>
+<head>
+  <title>Publisher Page</title>
+</head>
+<body>
+  <div id="test_area"></div>
+  <script type="text/javascript" src="es6-promise.auto.min.js"></script>
+  <script>
+
+    window.addEventListener('message', function(event) {
+          console.log(event.data);
+        }, false);
+
+    function testResponse(n, val) {
+      var div = document.createElement('div');
+      div.innerText = "Test " + n + ": " + val;
+      document.body.appendChild(div);
+    }
+
+    function createIframePromise(newIframe) {
+      var iframePromise = new Promise(function (resolve, reject) {
+          newIframe.onload = function (evt) {
+              resolve(evt.target.getAttribute('id'));
+          }
+      });
+      return iframePromise;
+    }
+
+    function createMessagePromise(origin) {
+      var messagePromise = new Promise(function (resolve, reject) {
+        window.addEventListener('message', function(event) {
+          if(event.origin === origin) {
+            console.log("logged: " + event.data);
+            resolve(event.data);
+          }
+        }, false);
+      });
+      return messagePromise
+    }
+
+    function tearDown() {
+      var node = document.getElementById("test_area");
+      while (node.firstChild) {
+        node.removeChild(node.firstChild);
+      }
+    }
+
+    function setUp() {
+      var iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.id = 'clear';
+      iframe.src = 'https://ads-hub.surge.sh/clear.html';
+      var promise = createIframePromise(iframe);
+      document.getElementById("test_area").appendChild(iframe);
+      return promise;
+    }
+
+    // Test 1
+    // Can set and get
+    setUp()
+    .then(function(res) {
+      var iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.id = 'test1';
+      iframe.src = 'https://ads-app1.surge.sh/app.html';
+      var iframePromise = createIframePromise(iframe);
+      document.getElementById("test_area").appendChild(iframe);
+      var messagePromise = createMessagePromise('https://ads-app1.surge.sh');
+      return Promise.all([iframePromise, messagePromise]);
+    })
+    .then(function(res) {
+      if (res[1] === "nullfoonull") {
+        testResponse(1, "OK");
+      } else {
+        testResponse(1, "FAILED");
+      }
+    })
+    .then(tearDown)
+    // Test 2
+    // Can get previously stored value
+    .then(setUp)
+    .then(function(res) {
+      var iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.id = 'test1';
+      iframe.src = 'https://ads-app1.surge.sh/app.html';
+      var iframePromise = createIframePromise(iframe);
+      document.getElementById("test_area").appendChild(iframe);
+      var messagePromise = createMessagePromise('https://ads-app1.surge.sh');
+      return Promise.all([iframePromise, messagePromise]);
+    })
+    .then(function() {
+      var iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.id = 'test1_1';
+      iframe.src = 'https://ads-app1.surge.sh/app.html';
+      var iframePromise = createIframePromise(iframe);
+      document.getElementById("test_area").appendChild(iframe);
+      var messagePromise = createMessagePromise('https://ads-app1.surge.sh');
+      return Promise.all([iframePromise, messagePromise]);
+    })
+    .then(function(res) {
+      console.log("test2: " + res);
+      if (res[1] === "foofoonull") {
+        testResponse(2, "OK");
+      } else {
+        testResponse(2, "FAILED");
+      }
+    })
+    .then(tearDown)
+    // Test 3
+    // Can get value cross-domain
+    .then(setUp)
+    .then(function(res) {
+      var iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.id = 'test1';
+      iframe.src = 'https://ads-app1.surge.sh/app.html';
+      var iframePromise = createIframePromise(iframe);
+      document.getElementById("test_area").appendChild(iframe);
+      var messagePromise = createMessagePromise('https://ads-app1.surge.sh');
+      return Promise.all([iframePromise, messagePromise]);
+    })
+    .then(function() {
+      var iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.id = 'test2';
+      iframe.src = 'https://ads-app2.surge.sh/app.html';
+      var iframePromise = createIframePromise(iframe);
+      document.getElementById("test_area").appendChild(iframe);
+      var messagePromise = createMessagePromise('https://ads-app2.surge.sh');
+      return Promise.all([iframePromise, messagePromise]);
+    })
+    .then(function(res) {
+      console.log("test3: " + res);
+      if (res[1] === "nullbarfoo") {
+        testResponse(3, "OK");
+      } else {
+        testResponse(3, "FAILED");
+      }
+    })
+    .then(tearDown)
+    ['catch'](function(err) {
+      console.log(err);
+    });
+
+  </script>
+</body>
+</html>
